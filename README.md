@@ -1,6 +1,6 @@
-# TiketMomo / J+SERVICE
+# J+SERVICES Platform
 
-Plateforme hybride Supabase/Firebase pour vouchers Wi-Fi, licences SaaS, espace `client`, espace `reseller` et control plane `admin`.
+Plateforme hybride Supabase/Firebase de `J+SERVICES` pour piloter plusieurs produits, licences SaaS, workspaces `admin`, `client`, `reseller` et futurs dashboards web/mobile. `TiketMomo` est l'un des premiers produits de l'ecosysteme.
 
 ## Vue produit
 
@@ -82,6 +82,14 @@ URLs locales:
 - backend: `npm test`
 - frontend lint: `npm run web:lint`
 - frontend build: `npm run web:build`
+
+## Docs de reprise
+
+Pour qu'un autre agent ou un autre developpeur puisse reprendre et deployer sans contexte oral:
+
+- handoff: [agent-handoff.md](/home/juste-dev/Documents/TiketMomo/docs/agent-handoff.md)
+- deploiement: [deployment-runbook.md](/home/juste-dev/Documents/TiketMomo/docs/deployment-runbook.md)
+- migration roles: [migration-canonical-roles.md](/home/juste-dev/Documents/TiketMomo/docs/migration-canonical-roles.md)
 
 ## Parcours web utiles
 

@@ -1,5 +1,14 @@
 -- J+SERVICE SUPABASE MASTER SCHEMA
--- PLATFORM VERSION 9.0
+-- PLATFORM VERSION 9.1
+--
+-- Canonical product roles:
+--   admin
+--   client
+--   reseller
+--
+-- Current storage remains compatible with legacy manager_* naming.
+-- New application code should prefer client/reseller vocabulary and use
+-- the canonical SQL views/functions defined near the end of this file.
 
 -- 1. EXTENSIONS
 create extension if not exists "uuid-ossp";
@@ -133,6 +142,8 @@ create table if not exists transactions (
 alter table transactions enable row level security;
 create index if not exists idx_transactions_manager_id on transactions(manager_id);
 create index if not exists idx_transactions_app_id on transactions(app_id);
+create index if not exists idx_transactions_status_created_at on transactions(status, created_at desc);
+create index if not exists idx_transactions_type_status_created_at on transactions(type, status, created_at desc);
 
 -- Materialized sale facts
 create table if not exists sales (
@@ -207,6 +218,7 @@ create table if not exists commission_logs (
 );
 alter table commission_logs enable row level security;
 create index if not exists idx_commission_logs_reseller_id on commission_logs(reseller_id);
+create index if not exists idx_commission_logs_transaction_id on commission_logs(transaction_id);
 
 create table if not exists payout_requests (
     id text primary key,
@@ -221,6 +233,7 @@ create table if not exists payout_requests (
 );
 alter table payout_requests enable row level security;
 create index if not exists idx_payout_requests_reseller_id on payout_requests(reseller_id);
+create index if not exists idx_payout_requests_reseller_status_created_at on payout_requests(reseller_id, status, created_at desc);
 
 -- Admin batches
 create table if not exists license_batches (
@@ -264,6 +277,7 @@ create table if not exists licenses (
 );
 alter table licenses enable row level security;
 create index if not exists idx_licenses_manager_id on licenses(manager_id);
+create index if not exists idx_licenses_source_tx_id on licenses(source_tx_id);
 
 create table if not exists license_entitlements (
     id uuid default uuid_generate_v4() primary key,
@@ -485,6 +499,25 @@ as $$
     order by stock asc, m.email asc;
 $$;
 
+create or replace function public.get_low_stock_clients()
+returns table(client_id text, email text, profile text, stock bigint)
+language sql
+security definer
+set search_path = ''
+as $$
+    select
+        v.manager_id as client_id,
+        m.email,
+        v.profile,
+        count(*)::bigint as stock
+    from public.vouchers v
+    join public.managers m on m.id = v.manager_id
+    where v.used = false
+    group by v.manager_id, m.email, v.profile
+    having count(*) < 10
+    order by stock asc, m.email asc;
+$$;
+
 create or replace function public.get_total_commissions_30d()
 returns table(total numeric)
 language sql
@@ -669,12 +702,98 @@ create trigger tr_transactions_log_sale
 
 -- 8. ANALYTIC VIEWS
 
+drop view if exists client_accounts;
+create view client_accounts
+with (security_invoker = true)
+as
+select
+    id as client_id,
+    email,
+    display_name,
+    status,
+    api_key,
+    license_key,
+    license_type,
+    license_expiry_date,
+    notified_almost_expired,
+    notified_critical_expired,
+    fedapay_p_key,
+    fedapay_s_key,
+    notification_flags,
+    logo_url,
+    created_at,
+    updated_at
+from public.managers;
+
+drop view if exists client_app_access;
+create view client_app_access
+with (security_invoker = true)
+as
+select
+    id,
+    manager_id as client_id,
+    app_id,
+    status,
+    config,
+    activated_at,
+    created_at,
+    updated_at
+from public.manager_apps;
+
+drop view if exists client_auth_identities;
+create view client_auth_identities
+with (security_invoker = true)
+as
+select
+    id,
+    manager_id as client_id,
+    provider,
+    provider_user_id,
+    email,
+    is_primary,
+    metadata,
+    created_at,
+    updated_at
+from public.auth_identities;
+
+drop view if exists client_licenses;
+create view client_licenses
+with (security_invoker = true)
+as
+select
+    id,
+    manager_id as client_id,
+    app_id,
+    plan_code,
+    status,
+    license_key,
+    starts_at,
+    expires_at,
+    source_tx_id,
+    metadata,
+    created_at,
+    updated_at
+from public.licenses;
+
 drop view if exists manager_sales_summary;
 create view manager_sales_summary
 with (security_invoker = true)
 as
 select
     manager_id,
+    app_id,
+    date(created_at) as sale_date,
+    count(*) as tickets_sold,
+    sum(amount) as total_revenue
+from public.sales
+group by manager_id, app_id, date(created_at);
+
+drop view if exists client_sales_summary;
+create view client_sales_summary
+with (security_invoker = true)
+as
+select
+    manager_id as client_id,
     app_id,
     date(created_at) as sale_date,
     count(*) as tickets_sold,

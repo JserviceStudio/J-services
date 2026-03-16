@@ -28,6 +28,8 @@ Compatibilité legacy encore acceptée dans l’application:
 Référence:
 
 - [migration-canonical-roles.md](/home/juste-dev/Documents/TiketMomo/docs/migration-canonical-roles.md)
+- [agent-handoff.md](/home/juste-dev/Documents/TiketMomo/docs/agent-handoff.md)
+- [deployment-runbook.md](/home/juste-dev/Documents/TiketMomo/docs/deployment-runbook.md)
 
 ---
 
@@ -104,5 +106,7 @@ Le schema supporte maintenant aussi:
 *   **Schéma Maître :** Toujours se référer à [supabase_master_schema.sql](file:///home/juste-dev/Documents/TiketMomo/database/supabase_master_schema.sql) pour toute modification de structure.
 *   **Logs d'Audit :** Toutes les actions sensibles sont journalisées dans la table `audit_logs` avec isolation RLS par utilisateur.
 *   **Règle de contribution :** dans le code applicatif, préférer `client` et `reseller`; réserver `manager_*` aux tables, colonnes et compatibilités legacy.
+*   **Reprise agent :** utiliser [agent-handoff.md](/home/juste-dev/Documents/TiketMomo/docs/agent-handoff.md) avant toute nouvelle passe importante.
+*   **Déploiement :** utiliser [deployment-runbook.md](/home/juste-dev/Documents/TiketMomo/docs/deployment-runbook.md) comme check-list de livraison.
 
 **J+SERVICE** n'est plus seulement une application ; c'est une infrastructure Cloud résiliente, sécurisée et temps-réel prête pour l'échelle nationale.
