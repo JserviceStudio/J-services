@@ -1,5 +1,7 @@
 import { AdminDashboardService } from '../../modules/admin-control-plane/services/adminDashboardService.js';
 import { AdminAccountService } from '../../modules/admin-control-plane/services/adminAccountService.js';
+import { ProductCatalogService } from '../../modules/catalog-management/services/productCatalogService.js';
+import { ProductSubscriptionService } from '../../modules/subscription-management/services/productSubscriptionService.js';
 
 export const AdminController = {
     /**
@@ -27,6 +29,79 @@ export const AdminController = {
         try {
             const data = await AdminAccountService.listAccounts();
             res.json({ success: true, data });
+        } catch (error) {
+            res.status(error.statusCode || 500).json({ success: false, error: error.message });
+        }
+    },
+
+    async getCatalogProductsAPI(req, res) {
+        try {
+            const data = await ProductCatalogService.listCatalog();
+            res.json({ success: true, data });
+        } catch (error) {
+            res.status(error.statusCode || 500).json({ success: false, error: error.message });
+        }
+    },
+
+    async createCatalogProductAPI(req, res) {
+        try {
+            const data = await ProductCatalogService.createProduct(req.body || {});
+            res.status(201).json({ success: true, data });
+        } catch (error) {
+            res.status(error.statusCode || 500).json({ success: false, error: error.message });
+        }
+    },
+
+    async createCatalogProductPlanAPI(req, res) {
+        try {
+            const data = await ProductCatalogService.createPlan(req.params.productCode, req.body || {});
+            res.status(201).json({ success: true, data });
+        } catch (error) {
+            res.status(error.statusCode || 500).json({ success: false, error: error.message });
+        }
+    },
+
+    async getClientSubscriptionsAPI(req, res) {
+        try {
+            const data = await ProductSubscriptionService.listClientSubscriptions(req.params.clientId);
+            res.json({ success: true, data });
+        } catch (error) {
+            res.status(error.statusCode || 500).json({ success: false, error: error.message });
+        }
+    },
+
+    async activateClientProductAPI(req, res) {
+        try {
+            const { productCode, ...payload } = req.body || {};
+            const data = await ProductSubscriptionService.activateProductForClient(
+                req.params.clientId,
+                productCode,
+                payload
+            );
+            res.status(201).json({ success: true, data });
+        } catch (error) {
+            res.status(error.statusCode || 500).json({ success: false, error: error.message });
+        }
+    },
+
+    async getResellerPermissionsAPI(req, res) {
+        try {
+            const data = await ProductSubscriptionService.listResellerPermissions(req.params.resellerId);
+            res.json({ success: true, data });
+        } catch (error) {
+            res.status(error.statusCode || 500).json({ success: false, error: error.message });
+        }
+    },
+
+    async grantResellerProductPermissionAPI(req, res) {
+        try {
+            const { productCode, ...payload } = req.body || {};
+            const data = await ProductSubscriptionService.grantResellerProductPermission(
+                req.params.resellerId,
+                productCode,
+                payload
+            );
+            res.status(201).json({ success: true, data });
         } catch (error) {
             res.status(error.statusCode || 500).json({ success: false, error: error.message });
         }

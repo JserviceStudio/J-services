@@ -79,6 +79,71 @@ export type AdminStats = {
     metadata?: Record<string, unknown>;
   }>;
   config: Record<string, unknown>;
+  catalog?: {
+    products: ProductCatalogItem[];
+    summary: {
+      total_products: number;
+      active_products: number;
+      total_product_plans: number;
+      total_product_apps: number;
+    };
+  };
+};
+
+export type ProductCatalogItem = {
+  id: string;
+  code: string;
+  name: string;
+  product_type: 'WEB_APP' | 'MOBILE_APP' | 'SERVICE' | 'PLATFORM_MODULE';
+  status: 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
+  default_route?: string | null;
+  sort_order?: number;
+  plans_count?: number;
+  apps_count?: number;
+  active_clients_count?: number;
+  active_resellers_count?: number;
+};
+
+export type ClientProductAccess = {
+  id: string;
+  client_id: string;
+  product_id: string;
+  product_code: string;
+  product_name: string;
+  product_type: string;
+  default_route?: string | null;
+  product_plan_id?: string | null;
+  product_plan_code?: string | null;
+  product_plan_name?: string | null;
+  status: 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'EXPIRED' | 'CANCELLED';
+  starts_at?: string;
+  ends_at?: string | null;
+  license_id?: string | null;
+  source?: string;
+  metadata?: Record<string, unknown>;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type ResellerProductPermission = {
+  id: string;
+  reseller_id: string;
+  product_id: string;
+  product_code: string;
+  product_name: string;
+  product_type: string;
+  product_plan_id?: string | null;
+  product_plan_code?: string | null;
+  product_plan_name?: string | null;
+  status: 'ACTIVE' | 'DISABLED' | 'EXPIRED';
+  commission_type: 'PERCENT' | 'FIXED';
+  commission_value: number;
+  sale_price_override?: number | null;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  metadata?: Record<string, unknown>;
+  created_at?: string;
+  updated_at?: string;
 };
 
 export type AdminAccountManager = {
@@ -129,6 +194,11 @@ export type ClientDashboard = {
       severity: 'success' | 'warning' | 'danger' | 'neutral';
       days_remaining: number | null;
     };
+  };
+  workspace?: {
+    current_product?: ClientProductAccess | null;
+    active_products: ClientProductAccess[];
+    products_count: number;
   };
   inventory: {
     total: number;
@@ -185,6 +255,7 @@ export type ClientDashboard = {
     last_inserted: number;
     last_error?: string | null;
   };
+  subscriptions?: ClientProductAccess[];
 };
 
 export type ResellerDashboard = {
@@ -221,6 +292,11 @@ export type ResellerDashboard = {
       success: number;
       failed: number;
     };
+    sellable_products_count?: number;
+  };
+  workspace?: {
+    sellable_products: ResellerProductPermission[];
+    products_count: number;
   };
   sales: Array<{
     id: string;
@@ -263,6 +339,7 @@ export type ResellerDashboard = {
     title: string;
     reference: string;
   }>;
+  permissions?: ResellerProductPermission[];
 };
 
 export type PartnerDashboard = ResellerDashboard;

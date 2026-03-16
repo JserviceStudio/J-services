@@ -1,78 +1,88 @@
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import { IdentityResolver } from '../modules/identity-access/services/identityResolver.js';
-
-const ROLE_ALIASES = {
-    admin: 'admin',
-    client: 'client',
-    manager: 'client',
-    reseller: 'reseller',
-    partner: 'reseller'
-};
-
-const normalizeRole = (role, fallbackRole = null) => {
-    if (typeof role === 'string' && ROLE_ALIASES[role]) {
-        return ROLE_ALIASES[role];
-    }
-
-    if (typeof fallbackRole === 'string' && ROLE_ALIASES[fallbackRole]) {
-        return ROLE_ALIASES[fallbackRole];
-    }
-
-    return role || fallbackRole || null;
-};
-
-const buildRoleDeniedResponse = (req, res, requiredRoles) => {
-    const acceptsHtml = req.headers.accept?.includes('text/html');
-    const target = requiredRoles.includes('admin')
-        ? '/auth/admin'
-        : requiredRoles.includes('reseller')
-            ? '/auth/reseller'
-            : requiredRoles.includes('client')
-                ? '/auth/client'
-            : null;
-
-    if (acceptsHtml && target) {
-        return res.status(403).send(`<script>window.location.href="${target}";</script>`);
-    }
-
-    return res.status(403).json({
-        success: false,
-        error: {
-            code: 'FORBIDDEN_ROLE',
-            message: 'Votre rôle ne permet pas cet accès.'
-        }
-    });
-};
-
-export const requireRole = (...requiredRoles) => (req, res, next) => {
-    const normalizedRequiredRoles = requiredRoles.map((role) => normalizeRole(role)).filter(Boolean);
-    const userRole = normalizeRole(req.user?.role);
-
-    if (!userRole || !normalizedRequiredRoles.includes(userRole)) {
-        return buildRoleDeniedResponse(req, res, normalizedRequiredRoles);
-    }
-
-    return next();
-};
+import { supabase, supabaseAdmin } from '../config/supabase.js';
+import { firebaseAuth } from '../config/firebase.js';
 
 /**
  * 🛡️ RÈGLE 1 : Middleware d'Isolation "Multi-Tenant"
- * Supporte 2 méthodes : Supabase JWT (Dashboard Web) OU Clé API (Mobile/SaaS Sync)
+ * Supporte 3 méthodes : Clé API, Supabase JWT OU Firebase Auth (Mobile)
  */
 export const requireAuth = async (req, res, next) => {
     try {
-        const identity = await IdentityResolver.resolveRequestIdentity(req);
+        const authHeader = req.headers.authorization;
+        const apiKeyHeader = req.headers['x-api-key'] || req.headers['x-license-key'];
+
+        // 1. Authentification par Clé API (Si fournie par le mobile)
+        if (apiKeyHeader) {
+            const { data: manager, error } = await supabaseAdmin
+                .from('managers')
+                .select('id, email')
+                .eq('api_key', apiKeyHeader)
+                .single();
+
+            if (error || !manager) throw new Error('API Key invalide.');
+
+            req.user = { manager_id: manager.id, email: manager.email, method: 'api_key' };
+            return next();
+        }
+
+        // 2. Authentification par Token (JWT Supabase ou Firebase)
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                success: false,
+                error: {
+                    code: 'UNAUTHORIZED_MISSING_TOKEN',
+                    message: 'Token d\'authentification ou Clé API manquante.'
+                }
+            });
+        }
+
+        const token = authHeader.split('Bearer ')[1];
+
+        // Détection du type de token (Firebase tokens sont souvent plus longs et structurés différemment)
+        // Mais ici on va tenter Firebase si firebaseAuth est dispo, sinon on rollback sur Supabase.
+        let userId = null;
+        let email = null;
+        let method = null;
+
+        if (firebaseAuth) {
+            try {
+                const decodedToken = await firebaseAuth.verifyIdToken(token);
+                userId = decodedToken.uid;
+                email = decodedToken.email;
+                method = 'firebase';
+            } catch (fbError) {
+                // Pas un token Firebase valide, on tente Supabase
+            }
+        }
+
+        if (!userId) {
+            const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+            if (!authError && user) {
+                userId = user.id;
+                email = user.email;
+                method = 'supabase';
+            }
+        }
+
+        if (!userId) {
+            throw new Error('Token invalide ou expiré.');
+        }
+
+        // Injection du Pivot de Sécurité Multi-Tenant
+        // CRITICAL: manager_id DOIT correspondre à l'ID dans la table 'managers'
         req.user = {
-            ...identity,
-            role: normalizeRole(identity.role, 'client')
+            manager_id: userId,
+            email: email,
+            method: method
         };
-        return next();
+
+        next();
     } catch (error) {
-        return res.status(error.statusCode || 401).json({
+        return res.status(401).json({
             success: false,
             error: {
-                code: error.code || 'UNAUTHORIZED_INVALID_CREDENTIALS',
+                code: 'UNAUTHORIZED_INVALID_CREDENTIALS',
                 message: error.message || 'Accès refusé. Token invalide ou expiré.'
             }
         });
@@ -101,40 +111,55 @@ export const requirePartnerAuth = async (req, res, next) => {
         const token = req.cookies?.partner_token || (req.headers.authorization && req.headers.authorization.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null);
 
         if (!token) {
-            return res.status(401).send('<script>window.location.href="/auth/reseller";</script>');
+            return res.status(401).send('<script>window.location.href="/partners/auth";</script>');
         }
 
         const decoded = jwt.verify(token, JWT_SECRET);
-        req.user = {
-            id: decoded.id,
-            role: normalizeRole(decoded.role, 'reseller')
-        };
+        req.user = { id: decoded.id };
         next();
     } catch (error) {
-        return res.status(401).send('<script>window.location.href="/auth/reseller";</script>');
+        return res.status(401).send('<script>window.location.href="/partners/auth";</script>');
     }
 };
 
-const ADMIN_SESSION_COOKIE = 'admin_session';
+/**
+ * 🔒 Middleware d'authentification Admin (Token serveur uniquement)
+ */
+export const requireAdminAuth = (req, res, next) => {
+    const configuredToken = process.env.ADMIN_DASHBOARD_TOKEN;
 
-const createAdminSessionToken = (username) => jwt.sign(
-    {
-        sub: username,
-        role: 'admin'
-    },
-    JWT_SECRET,
-    { expiresIn: '12h' }
-);
+    if (!configuredToken) {
+        return res.status(500).json({
+            success: false,
+            error: {
+                code: 'ADMIN_AUTH_NOT_CONFIGURED',
+                message: 'ADMIN_DASHBOARD_TOKEN est manquant côté serveur.'
+            }
+        });
+    }
 
-export const issueAdminSession = (res, username, { secure = process.env.NODE_ENV === 'production' } = {}) => {
-    const sessionToken = createAdminSessionToken(username);
+    const authHeader = req.headers.authorization;
+    const bearerToken = authHeader?.startsWith('Bearer ')
+        ? authHeader.split(' ')[1]
+        : null;
 
-    res.cookie(ADMIN_SESSION_COOKIE, sessionToken, {
-        httpOnly: true,
-        secure,
-        sameSite: 'Lax',
-        maxAge: 12 * 60 * 60 * 1000
-    });
+    const providedTokenHeader = req.headers['x-admin-token'];
+    const providedToken = Array.isArray(providedTokenHeader)
+        ? providedTokenHeader[0]
+        : (providedTokenHeader || bearerToken);
+
+    if (!safeCompare(providedToken, configuredToken)) {
+        return res.status(401).json({
+            success: false,
+            error: {
+                code: 'UNAUTHORIZED_ADMIN',
+                message: 'Accès admin refusé.'
+            }
+        });
+    }
+
+    return next();
+};
 };
 
 /**

@@ -6,6 +6,7 @@ import { PromoCodePolicy } from '../utils/promoCodePolicy.js';
 import { ResellerDashboardRepository } from '../repositories/resellerDashboardRepository.js';
 import { badRequest } from '../../../utils/appError.js';
 import { logger } from '../../../config/logger.js';
+import { ProductSubscriptionService } from '../../subscription-management/services/productSubscriptionService.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -120,10 +121,11 @@ export const ResellerPortalService = {
     },
 
     async getResellerDashboard(partnerId) {
-        const [partner, commissionLogs, payoutsRaw] = await Promise.all([
+        const [partner, commissionLogs, payoutsRaw, resellerPermissions] = await Promise.all([
             ResellerDashboardRepository.findResellerById(partnerId),
             ResellerDashboardRepository.listCommissionLogsByReseller(partnerId, 25),
-            ResellerDashboardRepository.listPayoutRequestsByReseller(partnerId, 25)
+            ResellerDashboardRepository.listPayoutRequestsByReseller(partnerId, 25),
+            ProductSubscriptionService.listResellerPermissions(partnerId)
         ]);
 
         const transactionIds = commissionLogs
@@ -206,6 +208,8 @@ export const ResellerPortalService = {
             .reduce((sum, sale) => sum + Number(sale.amount || 0), 0);
 
         const averageCommission = sales.length > 0 ? totalCommissions / sales.length : 0;
+        const activeProducts = (resellerPermissions || [])
+            .filter((permission) => permission.status === 'ACTIVE');
         const activity = [
             ...sales.map((sale) => ({
                 id: `sale-${sale.id}`,
@@ -232,6 +236,10 @@ export const ResellerPortalService = {
         return {
             partner,
             reseller: partner,
+            workspace: {
+                sellable_products: activeProducts,
+                products_count: activeProducts.length
+            },
             summary: {
                 total_commissions: totalCommissions,
                 sales_count: sales.length,
@@ -242,11 +250,13 @@ export const ResellerPortalService = {
                 sales_last_7d: salesLast7d.length,
                 sales_this_month: salesThisMonth.length,
                 average_commission: averageCommission,
-                payout_breakdown: payoutStatusBreakdown
+                payout_breakdown: payoutStatusBreakdown,
+                sellable_products_count: activeProducts.length
             },
             sales,
             payouts,
-            activity
+            activity,
+            permissions: resellerPermissions || []
         };
     },
 

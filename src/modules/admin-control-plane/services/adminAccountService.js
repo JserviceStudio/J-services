@@ -3,6 +3,7 @@ import { supabaseAdmin } from '../../../config/supabase.js';
 import { badRequest } from '../../../utils/appError.js';
 import { ManagerRepository } from '../../identity-access/repositories/managerRepository.js';
 import { PartnerPortalService } from '../../partner-marketing/services/partnerPortalService.js';
+import { ProductSubscriptionService } from '../../subscription-management/services/productSubscriptionService.js';
 import { MonitoringService } from '../../../services/monitoring/monitoringService.js';
 
 const MANAGER_STATUSES = new Set(['ACTIVE', 'SUSPENDED']);
@@ -62,6 +63,15 @@ export const AdminAccountService = {
 
         const { error: siteError } = await ManagerRepository.ensureDefaultSite(clientId, 'wifi-core');
         if (siteError) throw siteError;
+
+        await ProductSubscriptionService.activateProductForClient(clientId, 'tiketmomo', {
+            source: 'ADMIN',
+            activatedBy: 'admin',
+            metadata: {
+                bootstrap: true,
+                reason: 'client_account_creation'
+            }
+        });
 
         await MonitoringService.logAudit({
             clientId: 'admin',

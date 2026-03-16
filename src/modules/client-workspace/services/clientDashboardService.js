@@ -1,5 +1,6 @@
 import { ManagerRepository } from '../../identity-access/repositories/managerRepository.js';
 import { VoucherRepository } from '../../voucher-operations/repositories/voucherRepository.js';
+import { ProductSubscriptionService } from '../../subscription-management/services/productSubscriptionService.js';
 
 const formatVoucherRow = (voucher) => ({
     id: voucher.id,
@@ -94,12 +95,14 @@ export const ClientDashboardService = {
             { data: client, error: clientError },
             { data: recentVouchers, error: vouchersError },
             counts,
-            { data: syncJobs, error: syncJobsError }
+            { data: syncJobs, error: syncJobsError },
+            productSubscriptions
         ] = await Promise.all([
             ManagerRepository.findManagerWorkspaceProfile(managerId),
             VoucherRepository.listRecentVouchers(managerId, 12),
             VoucherRepository.countVoucherInventory(managerId),
-            VoucherRepository.listRecentSyncJobs(managerId, 8)
+            VoucherRepository.listRecentSyncJobs(managerId, 8),
+            ProductSubscriptionService.listClientSubscriptions(managerId)
         ]);
 
         if (clientError) throw clientError;
@@ -130,6 +133,11 @@ export const ClientDashboardService = {
         }));
         const lastSync = normalizedSyncJobs[0] || null;
         const criticalProfiles = profiles.filter((profile) => profile.available <= LOW_STOCK_THRESHOLD);
+        const activeProducts = (productSubscriptions || [])
+            .filter((subscription) => subscription.status === 'ACTIVE');
+        const currentProduct = activeProducts.find((subscription) => subscription.product_code === 'tiketmomo')
+            || activeProducts[0]
+            || null;
 
         return {
             client: {
@@ -141,6 +149,11 @@ export const ClientDashboardService = {
                 license_key: client.license_key || null,
                 license_expiry_date: client.license_expiry_date || null,
                 license_status: licenseStatus
+            },
+            workspace: {
+                current_product: currentProduct,
+                active_products: activeProducts,
+                products_count: activeProducts.length
             },
             inventory: {
                 total: totalRes.count || 0,
@@ -162,7 +175,8 @@ export const ClientDashboardService = {
                 last_batch_size: lastSync?.batch_size || 0,
                 last_inserted: lastSync?.inserted || 0,
                 last_error: lastSync?.last_error || null
-            }
+            },
+            subscriptions: productSubscriptions || []
         };
     }
 };

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1152d4",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<title>J+SERVICES | Product Catalog</title>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/50 dark:from-slate-950 dark:to-slate-900">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-b border-white/20 dark:border-slate-800/50 px-4 md:px-10 py-4">
+<div class="max-w-7xl mx-auto flex items-center justify-between gap-8">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3">
+<div class="text-primary">
+<span class="material-symbols-outlined text-3xl">token</span>
+</div>
+<h2 class="text-xl font-black tracking-tight">J+SERVICES</h2>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-primary font-semibold text-sm" href="#">Catalog</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium text-sm hover:text-primary transition-colors" href="#">Users</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium text-sm hover:text-primary transition-colors" href="#">Billing</a>
+<a class="text-slate-600 dark:text-slate-400 font-medium text-sm hover:text-primary transition-colors" href="#">Settings</a>
+</nav>
+</div>
+<div class="flex flex-1 justify-end items-center gap-4">
+<div class="hidden lg:flex flex-1 max-w-md items-center bg-slate-100 dark:bg-slate-800 rounded-full px-4 py-2 gap-3 border border-transparent focus-within:border-primary/50 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all">
+<span class="material-symbols-outlined text-slate-500 text-xl">search</span>
+<input class="bg-transparent border-none focus:ring-0 w-full text-sm placeholder:text-slate-500" placeholder="Search platform..." type="text"/>
+</div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<p class="text-xs font-bold leading-none">Alex Rivera</p>
+<p class="text-[10px] text-slate-500 uppercase tracking-wider">Global Admin</p>
+</div>
+<div class="size-10 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center overflow-hidden">
+<img alt="Admin user profile" class="w-full h-full object-cover" data-alt="Professional headshot of a male administrative user" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFjg1p-LqpdHFB4ZFRE0xn8djP1n8mXo_Kdk0cyg-iEIgSpPcH21IidRm2Km_nGItSRgqIi8TUq4gh9x3OCDX3XC7tSMVeTXQ0E3XlPVFqPcFku-4hApYmGKaUooYgzrMbYSEbvjySyAjAw3Lhr_wDqTTGBWJZIgsnGOcZQPmFDX0kNoErP5LOYuui05M2bQsqTxBO_Ayed5Qhy6ce9zmHrEPjaCkbtVKrAhyAGcuQhxBptuiD8Hhs-J4Y1ypNgaT0bLRYHhn4UGs"/>
+</div>
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-4 py-8">
+<!-- Page Header -->
+<div class="mb-8">
+<h1 class="text-5xl font-black tracking-tight mb-3 bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400">Product Catalog</h1>
+<p class="text-slate-600 dark:text-slate-400 max-w-2xl">Manage and monitor all platform services from a global perspective. Deploy new solutions or update existing service configurations.</p>
+</div>
+<!-- Filters & Search Area (Material 3 Inspired) -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+<div class="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+<button class="px-6 py-2.5 rounded-full bg-primary text-white text-sm font-semibold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all">All</button>
+<button class="px-6 py-2.5 rounded-full bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-white dark:hover:bg-slate-700 border border-slate-200/50 dark:border-slate-700/50 transition-all shadow-sm">Active</button>
+<button class="px-6 py-2.5 rounded-full bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-white dark:hover:bg-slate-700 border border-slate-200/50 dark:border-slate-700/50 transition-all shadow-sm">Beta</button>
+<button class="px-6 py-2.5 rounded-full bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-white dark:hover:bg-slate-700 border border-slate-200/50 dark:border-slate-700/50 transition-all shadow-sm">Archived</button>
+</div>
+<div class="relative w-full md:max-w-xs">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">filter_list</span>
+<select class="w-full pl-12 pr-4 py-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 rounded-2xl text-sm appearance-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all shadow-sm">
+<option>Sort by: Newest</option>
+<option>Sort by: Name A-Z</option>
+<option>Sort by: Popularity</option>
+</select>
+</div>
+</div>
+<!-- Product Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Product Card: TiketMomo -->
+<div class="group bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/40 dark:border-slate-800/40 rounded-3xl p-8 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-500 flex flex-col h-full">
+<div class="flex justify-between items-start mb-6">
+<div class="size-16 rounded-2xl bg-gradient-to-br from-primary/10 to-transparent dark:from-primary/20 flex items-center justify-center text-primary group-hover:rotate-6 transition-transform duration-500">
+<span class="material-symbols-outlined text-3xl">confirmation_number</span>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs font-bold uppercase tracking-wider">Active</span>
+</div>
+<div class="flex-grow">
+<h3 class="text-2xl font-bold mb-3 tracking-tight">TiketMomo</h3>
+<p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6 font-medium">Complete event ticketing and management system with integrated mobile money payments.</p>
+</div>
+<div class="pt-6 border-t border-slate-200/50 dark:border-slate-800/50 mt-auto flex items-center justify-between">
+<div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-lg">layers</span>
+<span class="text-sm font-medium">4 Plans</span>
+</div>
+<button class="text-primary font-bold text-sm flex items-center gap-1 group/btn">
+                        Manage <span class="material-symbols-outlined text-lg group-hover/btn:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Product Card: Future App A -->
+<div class="group bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/40 dark:border-slate-800/40 rounded-3xl p-8 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-500 flex flex-col h-full">
+<div class="flex justify-between items-start mb-6">
+<div class="size-16 rounded-2xl bg-gradient-to-br from-primary/10 to-transparent dark:from-primary/20 flex items-center justify-center text-primary group-hover:rotate-6 transition-transform duration-500">
+<span class="material-symbols-outlined text-3xl">rocket_launch</span>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-xs font-bold uppercase tracking-wider">Coming Soon</span>
+</div>
+<div class="flex-grow">
+<h3 class="text-2xl font-bold mb-3 tracking-tight">Future App A</h3>
+<p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6 font-medium">Next-gen AI driven analytics dashboard for small to medium logistics enterprises.</p>
+</div>
+<div class="pt-6 border-t border-slate-200/50 dark:border-slate-800/50 mt-auto flex items-center justify-between">
+<div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-lg">layers</span>
+<span class="text-sm font-medium">2 Plans</span>
+</div>
+<button class="text-slate-400 dark:text-slate-500 font-bold text-sm flex items-center gap-1 cursor-not-allowed">
+                        Edit Draft <span class="material-symbols-outlined text-lg">lock</span>
+</button>
+</div>
+</div>
+<!-- Product Card: Future App B -->
+<div class="group bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/40 dark:border-slate-800/40 rounded-3xl p-8 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-500 flex flex-col h-full">
+<div class="flex justify-between items-start mb-6">
+<div class="size-16 rounded-2xl bg-gradient-to-br from-primary/10 to-transparent dark:from-primary/20 flex items-center justify-center text-primary group-hover:rotate-6 transition-transform duration-500">
+<span class="material-symbols-outlined text-3xl">edit_note</span>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Draft</span>
+</div>
+<div class="flex-grow">
+<h3 class="text-2xl font-bold mb-3 tracking-tight">Future App B</h3>
+<p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6 font-medium">Collaborative workspace tool designed for remote engineering teams in emerging markets.</p>
+</div>
+<div class="pt-6 border-t border-slate-200/50 dark:border-slate-800/50 mt-auto flex items-center justify-between">
+<div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-lg">layers</span>
+<span class="text-sm font-medium">0 Plans</span>
+</div>
+<button class="text-primary font-bold text-sm flex items-center gap-1 group/btn">
+                        Resume Setup <span class="material-symbols-outlined text-lg group-hover/btn:translate-x-1 transition-transform">play_arrow</span>
+</button>
+</div>
+</div>
+<!-- Empty State / Add Product -->
+<div class="group relative overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl p-8 flex flex-col items-center justify-center text-center hover:border-primary/50 transition-all duration-500 cursor-pointer min-h-[320px] bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm"><div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 blur-3xl transition-opacity duration-700 pointer-events-none"></div>
+<div class="size-16 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-all mb-4">
+<span class="material-symbols-outlined text-4xl">add</span>
+</div>
+<h3 class="text-lg font-bold">Add New Product</h3>
+<p class="text-slate-500 text-sm mt-1">Ready to scale? Launch a new service on the catalog.</p>
+</div>
+</div>
+</main>
+<!-- Sidebar Trigger (Mobile Only) -->
+<div class="fixed bottom-6 right-6 lg:hidden">
+<button class="px-6 py-2.5 rounded-full bg-primary text-white text-sm font-semibold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</body></html>

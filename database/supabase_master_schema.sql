@@ -1,5 +1,5 @@
 -- J+SERVICE SUPABASE MASTER SCHEMA
--- PLATFORM VERSION 9.1
+-- PLATFORM VERSION 9.2
 --
 -- Canonical product roles:
 --   admin
@@ -340,6 +340,115 @@ create table if not exists analytics_daily_facts (
 alter table analytics_daily_facts enable row level security;
 create index if not exists idx_analytics_daily_facts_manager_day on analytics_daily_facts(manager_id, day desc);
 
+-- Platform commercial catalog
+create table if not exists products (
+    id uuid default uuid_generate_v4() primary key,
+    code text not null unique,
+    name text not null,
+    product_type text not null check (product_type in ('WEB_APP', 'MOBILE_APP', 'SERVICE', 'PLATFORM_MODULE')),
+    status text not null default 'DRAFT' check (status in ('DRAFT', 'ACTIVE', 'ARCHIVED')),
+    tagline text,
+    description text,
+    icon text,
+    brand_color text,
+    default_route text,
+    sort_order integer not null default 0,
+    metadata jsonb not null default '{}',
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+alter table products enable row level security;
+create index if not exists idx_products_status_sort_order on products(status, sort_order, created_at desc);
+create index if not exists idx_products_product_type on products(product_type);
+
+create table if not exists product_plans (
+    id uuid default uuid_generate_v4() primary key,
+    product_id uuid not null references products(id) on delete cascade,
+    code text not null,
+    name text not null,
+    description text,
+    billing_mode text not null check (billing_mode in ('ONE_TIME', 'MONTHLY', 'YEARLY', 'CUSTOM')),
+    duration_days integer,
+    price_amount numeric(12,2) not null default 0 check (price_amount >= 0),
+    currency text not null default 'XOF',
+    status text not null default 'DRAFT' check (status in ('DRAFT', 'ACTIVE', 'DISABLED')),
+    is_default boolean not null default false,
+    features_json jsonb not null default '{}',
+    metadata jsonb not null default '{}',
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    unique(product_id, code)
+);
+alter table product_plans enable row level security;
+create index if not exists idx_product_plans_product_id on product_plans(product_id);
+create index if not exists idx_product_plans_status on product_plans(status);
+create unique index if not exists idx_product_plans_one_default_per_product on product_plans(product_id) where is_default = true;
+
+create table if not exists product_apps (
+    id uuid default uuid_generate_v4() primary key,
+    product_id uuid not null references products(id) on delete cascade,
+    app_id text not null references apps(id) on delete cascade,
+    entrypoint text,
+    is_primary boolean not null default false,
+    metadata jsonb not null default '{}',
+    created_at timestamptz not null default now(),
+    unique(product_id, app_id)
+);
+alter table product_apps enable row level security;
+create index if not exists idx_product_apps_product_id on product_apps(product_id);
+create index if not exists idx_product_apps_app_id on product_apps(app_id);
+create unique index if not exists idx_product_apps_one_primary_per_product on product_apps(product_id) where is_primary = true;
+
+create table if not exists client_product_subscriptions (
+    id uuid default uuid_generate_v4() primary key,
+    client_id text not null references managers(id) on delete cascade,
+    product_id uuid not null references products(id) on delete cascade,
+    product_plan_id uuid references product_plans(id) on delete set null,
+    status text not null default 'PENDING' check (status in ('PENDING', 'ACTIVE', 'SUSPENDED', 'EXPIRED', 'CANCELLED')),
+    starts_at timestamptz not null default now(),
+    ends_at timestamptz,
+    activated_by text,
+    source text not null default 'ADMIN' check (source in ('ADMIN', 'RESELLER', 'SYSTEM', 'PROMO')),
+    license_id text references licenses(id) on delete set null,
+    metadata jsonb not null default '{}',
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+alter table client_product_subscriptions enable row level security;
+create index if not exists idx_client_product_subscriptions_client_id on client_product_subscriptions(client_id);
+create index if not exists idx_client_product_subscriptions_product_id on client_product_subscriptions(product_id);
+create index if not exists idx_client_product_subscriptions_plan_id on client_product_subscriptions(product_plan_id);
+create index if not exists idx_client_product_subscriptions_status on client_product_subscriptions(status);
+create unique index if not exists idx_client_product_subscriptions_one_active_per_product
+    on client_product_subscriptions(client_id, product_id) where status = 'ACTIVE';
+
+create table if not exists reseller_product_permissions (
+    id uuid default uuid_generate_v4() primary key,
+    reseller_id text not null references resellers(id) on delete cascade,
+    product_id uuid not null references products(id) on delete cascade,
+    product_plan_id uuid references product_plans(id) on delete cascade,
+    status text not null default 'ACTIVE' check (status in ('ACTIVE', 'DISABLED', 'EXPIRED')),
+    commission_type text not null default 'PERCENT' check (commission_type in ('PERCENT', 'FIXED')),
+    commission_value numeric(12,2) not null default 0 check (commission_value >= 0),
+    sale_price_override numeric(12,2),
+    starts_at timestamptz,
+    ends_at timestamptz,
+    metadata jsonb not null default '{}',
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+alter table reseller_product_permissions enable row level security;
+create index if not exists idx_reseller_product_permissions_reseller_id on reseller_product_permissions(reseller_id);
+create index if not exists idx_reseller_product_permissions_product_id on reseller_product_permissions(product_id);
+create index if not exists idx_reseller_product_permissions_plan_id on reseller_product_permissions(product_plan_id);
+create index if not exists idx_reseller_product_permissions_status on reseller_product_permissions(status);
+create unique index if not exists idx_reseller_product_permissions_unique_scope
+    on reseller_product_permissions(
+        reseller_id,
+        product_id,
+        coalesce(product_plan_id, '00000000-0000-0000-0000-000000000000'::uuid)
+    );
+
 -- 3. FUNCTIONS & RPCs
 
 do $$
@@ -559,6 +668,11 @@ create policy "Licenses Policy" on licenses for all using ((select auth.uid())::
 create policy "Operational Events Policy" on operational_events for all using ((select auth.uid())::text = manager_id);
 create policy "Sync Jobs Policy" on sync_jobs for all using ((select auth.uid())::text = manager_id);
 create policy "Analytics Facts Policy" on analytics_daily_facts for select using ((select auth.uid())::text = manager_id);
+create policy "Products Policy" on products for select using (true);
+create policy "Product Plans Policy" on product_plans for select using (true);
+create policy "Product Apps Policy" on product_apps for select using (true);
+create policy "Client Product Subscriptions Policy" on client_product_subscriptions for select using ((select auth.uid())::text = client_id);
+create policy "Reseller Product Permissions Policy" on reseller_product_permissions for select using ((select auth.uid())::text = reseller_id);
 
 -- 5. REALTIME
 
@@ -644,6 +758,18 @@ create trigger tr_sync_jobs_touch_updated_at before update on sync_jobs for each
 
 drop trigger if exists tr_analytics_daily_facts_touch_updated_at on analytics_daily_facts;
 create trigger tr_analytics_daily_facts_touch_updated_at before update on analytics_daily_facts for each row execute function public.touch_updated_at();
+
+drop trigger if exists tr_products_touch_updated_at on products;
+create trigger tr_products_touch_updated_at before update on products for each row execute function public.touch_updated_at();
+
+drop trigger if exists tr_product_plans_touch_updated_at on product_plans;
+create trigger tr_product_plans_touch_updated_at before update on product_plans for each row execute function public.touch_updated_at();
+
+drop trigger if exists tr_client_product_subscriptions_touch_updated_at on client_product_subscriptions;
+create trigger tr_client_product_subscriptions_touch_updated_at before update on client_product_subscriptions for each row execute function public.touch_updated_at();
+
+drop trigger if exists tr_reseller_product_permissions_touch_updated_at on reseller_product_permissions;
+create trigger tr_reseller_product_permissions_touch_updated_at before update on reseller_product_permissions for each row execute function public.touch_updated_at();
 
 create or replace function public.notify_low_stock()
 returns trigger
@@ -740,6 +866,83 @@ select
     updated_at
 from public.manager_apps;
 
+drop view if exists product_catalog_summary;
+create view product_catalog_summary
+with (security_invoker = true)
+as
+select
+    p.id,
+    p.code,
+    p.name,
+    p.product_type,
+    p.status,
+    p.default_route,
+    p.sort_order,
+    count(distinct pp.id) as plans_count,
+    count(distinct pa.app_id) as apps_count,
+    count(distinct cps.client_id) filter (where cps.status = 'ACTIVE') as active_clients_count,
+    count(distinct rpp.reseller_id) filter (where rpp.status = 'ACTIVE') as active_resellers_count
+from public.products p
+left join public.product_plans pp on pp.product_id = p.id
+left join public.product_apps pa on pa.product_id = p.id
+left join public.client_product_subscriptions cps on cps.product_id = p.id
+left join public.reseller_product_permissions rpp on rpp.product_id = p.id
+group by p.id, p.code, p.name, p.product_type, p.status, p.default_route, p.sort_order;
+
+drop view if exists client_product_access;
+create view client_product_access
+with (security_invoker = true)
+as
+select
+    cps.id,
+    cps.client_id,
+    cps.product_id,
+    p.code as product_code,
+    p.name as product_name,
+    p.product_type,
+    p.default_route,
+    cps.product_plan_id,
+    pp.code as product_plan_code,
+    pp.name as product_plan_name,
+    cps.status,
+    cps.starts_at,
+    cps.ends_at,
+    cps.license_id,
+    cps.source,
+    cps.metadata,
+    cps.created_at,
+    cps.updated_at
+from public.client_product_subscriptions cps
+join public.products p on p.id = cps.product_id
+left join public.product_plans pp on pp.id = cps.product_plan_id;
+
+drop view if exists reseller_product_catalog;
+create view reseller_product_catalog
+with (security_invoker = true)
+as
+select
+    rpp.id,
+    rpp.reseller_id,
+    rpp.product_id,
+    p.code as product_code,
+    p.name as product_name,
+    p.product_type,
+    rpp.product_plan_id,
+    pp.code as product_plan_code,
+    pp.name as product_plan_name,
+    rpp.status,
+    rpp.commission_type,
+    rpp.commission_value,
+    rpp.sale_price_override,
+    rpp.starts_at,
+    rpp.ends_at,
+    rpp.metadata,
+    rpp.created_at,
+    rpp.updated_at
+from public.reseller_product_permissions rpp
+join public.products p on p.id = rpp.product_id
+left join public.product_plans pp on pp.id = rpp.product_plan_id;
+
 drop view if exists client_auth_identities;
 create view client_auth_identities
 with (security_invoker = true)
@@ -815,3 +1018,99 @@ select
 from public.resellers r
 left join public.commission_logs c on r.id = c.reseller_id
 group by r.id, r.name, r.promo_code, r.balance;
+
+insert into products (
+    code,
+    name,
+    product_type,
+    status,
+    tagline,
+    description,
+    default_route,
+    sort_order,
+    metadata
+)
+values (
+    'tiketmomo',
+    'TiketMomo',
+    'WEB_APP',
+    'ACTIVE',
+    'Gestion vouchers, ventes et operations Wi-Fi',
+    'Premier produit de l ecosysteme J+SERVICES pour la gestion de vouchers, ventes et operations associees.',
+    '/client',
+    10,
+    jsonb_build_object('workspace_role', 'client', 'studio_origin', 'J+SERVICES')
+)
+on conflict (code) do update
+set
+    name = excluded.name,
+    product_type = excluded.product_type,
+    status = excluded.status,
+    tagline = excluded.tagline,
+    description = excluded.description,
+    default_route = excluded.default_route,
+    sort_order = excluded.sort_order,
+    metadata = excluded.metadata;
+
+insert into product_apps (
+    product_id,
+    app_id,
+    entrypoint,
+    is_primary,
+    metadata
+)
+select
+    p.id,
+    'wifi-core',
+    '/client',
+    true,
+    jsonb_build_object('workspace', 'client', 'product_code', p.code)
+from products p
+where p.code = 'tiketmomo'
+on conflict (product_id, app_id) do update
+set
+    entrypoint = excluded.entrypoint,
+    is_primary = excluded.is_primary,
+    metadata = excluded.metadata;
+
+insert into product_plans (
+    product_id,
+    code,
+    name,
+    description,
+    billing_mode,
+    duration_days,
+    price_amount,
+    currency,
+    status,
+    is_default,
+    features_json,
+    metadata
+)
+select
+    p.id,
+    'standard',
+    'Standard',
+    'Plan standard TiketMomo',
+    'MONTHLY',
+    30,
+    0,
+    'XOF',
+    'ACTIVE',
+    true,
+    jsonb_build_object('dashboard', true, 'voucher_operations', true),
+    jsonb_build_object('seeded_by', 'platform_core')
+from products p
+where p.code = 'tiketmomo'
+on conflict (product_id, code) do update
+set
+    name = excluded.name,
+    description = excluded.description,
+    billing_mode = excluded.billing_mode,
+    duration_days = excluded.duration_days,
+    price_amount = excluded.price_amount,
+    currency = excluded.currency,
+    status = excluded.status,
+    is_default = excluded.is_default,
+    features_json = excluded.features_json,
+    metadata = excluded.metadata;

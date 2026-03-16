@@ -13,8 +13,8 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: 'TiketMomo Control Surface',
-  description: 'Web app multi-espaces pour admin, reseller et client.',
+  title: 'J+SERVICES Platform',
+  description: 'Plateforme multi-workspace pour admin, client et reseller.',
 };
 
 export default function RootLayout({

@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { Parser } from 'json2csv';
 import { supabaseAdmin } from '../../../config/supabase.js';
 import { AdminMarketingService } from './adminMarketingService.js';
+import { ProductCatalogService } from '../../catalog-management/services/productCatalogService.js';
 
 const parseSettings = (rows = []) => {
     const settings = {};
@@ -79,7 +80,8 @@ export const AdminDashboardService = {
             { data: auditLogs },
             { data: recentTransactions, error: recentTransactionsError },
             { data: recentLicenseSeries, error: recentLicenseSeriesError },
-            { data: recentPayoutSeries, error: recentPayoutSeriesError }
+            { data: recentPayoutSeries, error: recentPayoutSeriesError },
+            productCatalog
         ] = await Promise.all([
             supabaseAdmin.from('managers').select('*', { count: 'exact', head: true }),
             supabaseAdmin.rpc('get_admin_tx_stats'),
@@ -97,7 +99,8 @@ export const AdminDashboardService = {
             supabaseAdmin.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(10),
             supabaseAdmin.from('transactions').select('created_at, amount').gte('created_at', new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString()),
             supabaseAdmin.from('licenses').select('created_at').gte('created_at', new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString()),
-            supabaseAdmin.from('payout_requests').select('created_at, amount').gte('created_at', new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString())
+            supabaseAdmin.from('payout_requests').select('created_at, amount').gte('created_at', new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString()),
+            ProductCatalogService.listCatalog()
         ]);
 
         if (recentLicensesError) throw recentLicensesError;
@@ -147,7 +150,16 @@ export const AdminDashboardService = {
             batches: recentBatches || [],
             marketing: marketingSnapshot,
             auditLogs: auditLogs || [],
-            config: settings
+            config: settings,
+            catalog: {
+                products: productCatalog || [],
+                summary: {
+                    total_products: (productCatalog || []).length,
+                    active_products: (productCatalog || []).filter((product) => product.status === 'ACTIVE').length,
+                    total_product_plans: (productCatalog || []).reduce((sum, product) => sum + Number(product.plans_count || 0), 0),
+                    total_product_apps: (productCatalog || []).reduce((sum, product) => sum + Number(product.apps_count || 0), 0)
+                }
+            }
         };
     },
 

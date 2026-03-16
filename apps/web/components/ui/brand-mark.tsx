@@ -19,8 +19,8 @@ function BrandGlyph({ compact = false }: { compact?: boolean }) {
       />
       <defs>
         <linearGradient id="jplus-services-gradient" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#D96A12" />
-          <stop offset="1" stopColor="#F1A247" />
+          <stop stopColor="#0F67FF" />
+          <stop offset="1" stopColor="#1152D4" />
         </linearGradient>
       </defs>
     </svg>
@@ -36,7 +36,7 @@ export function BrandMark({
 }) {
   return (
     <div className={cn('flex items-center gap-3', className)}>
-      <div className="rounded-[1.1rem] shadow-[var(--shadow-card)]">
+      <div className="rounded-[1.1rem] shadow-[var(--shadow-soft)]">
         <BrandGlyph compact={compact} />
       </div>
       <div className="min-w-0">
@@ -49,7 +49,7 @@ export function BrandMark({
           </span>
           {!compact ? (
             <span className="text-[0.78rem] font-semibold uppercase tracking-[0.16em] text-[var(--primary)]">
-              Pro Suite
+              Control Hub
             </span>
           ) : null}
         </div>
@@ -61,7 +61,7 @@ export function BrandMark({
 export function BrandHeroMark() {
   return (
     <div className="flex items-center gap-4">
-      <div className="rounded-[1.35rem] shadow-[var(--shadow-card)]">
+      <div className="rounded-[1.35rem] shadow-[var(--shadow-soft)]">
         <BrandGlyph />
       </div>
       <div>
