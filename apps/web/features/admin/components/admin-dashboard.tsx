@@ -81,7 +81,7 @@ export function AdminDashboard() {
   ];
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-8">
       <SectionHeader
         kicker="Admin control plane"
         title="Admin Overview"
@@ -122,7 +122,7 @@ export function AdminDashboard() {
       {data ? (
         <>
           <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-            <div className="card-admin rounded-[1.75rem] p-6 shadow-[var(--shadow-card)]">
+            <div className="card-admin rounded-[2rem] p-8 shadow-[var(--shadow-card)]">
               <div className="flex items-center gap-2.5">
                 <span className="flex size-10 items-center justify-center rounded-[1rem] border border-[var(--line-strong)] bg-white/75 text-[var(--primary)]">
                   <ShieldCheck className="size-5" aria-hidden="true" />
@@ -154,7 +154,7 @@ export function AdminDashboard() {
               </div>
             </div>
 
-            <div className="card-neutral rounded-[1.75rem] p-6 shadow-[var(--shadow-card)]">
+            <div className="card-neutral rounded-[2rem] p-8 shadow-[var(--shadow-card)]">
               <div className="flex items-center gap-2.5">
                 <span className="flex size-10 items-center justify-center rounded-[1rem] border border-[var(--line-strong)] bg-white/75 text-[var(--primary)]">
                   <CircleAlert className="size-5" aria-hidden="true" />

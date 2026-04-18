@@ -17,7 +17,7 @@ export function StatCard({
   return (
     <article
       className={cn(
-        'rounded-[1.65rem] p-5 shadow-[var(--shadow-card)]',
+        'rounded-[2rem] p-6 shadow-[var(--shadow-card)]',
         tone === 'public' && 'card-public',
         tone === 'admin' && 'card-admin',
         tone === 'partner' && 'card-partner',
