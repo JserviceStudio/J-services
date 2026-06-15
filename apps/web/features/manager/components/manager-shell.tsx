@@ -112,7 +112,7 @@ export function ClientShell() {
   };
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-8">
       <SectionHeader
         kicker="Client workspace"
         title="Client Insights"
@@ -178,7 +178,7 @@ export function ClientShell() {
             return (
               <>
                 <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-                  <div className="card-manager rounded-[1.75rem] p-6 shadow-[var(--shadow-card)]">
+                  <div className="card-manager rounded-[2rem] p-8 shadow-[var(--shadow-card)]">
                     <div className="flex items-center gap-2.5">
                       <span className="flex size-10 items-center justify-center rounded-[1rem] border border-[var(--line-strong)] bg-white/75 text-[var(--primary)]">
                         <Compass className="size-5" aria-hidden="true" />
@@ -236,7 +236,7 @@ export function ClientShell() {
                   </div>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <StatCard
                     label="Monthly Sales"
                     value={`${data.inventory.used}`}
@@ -362,7 +362,7 @@ export function ClientShell() {
                     />
                   </div>
 
-                  <div className="card-public rounded-[1.75rem] p-5 shadow-[var(--shadow-card)]">
+                  <div className="card-public rounded-[2rem] p-6 shadow-[var(--shadow-card)]">
                     <div className="flex items-center gap-2.5">
                       <span className="flex size-10 items-center justify-center rounded-[1rem] border border-[var(--line-strong)] bg-white/75 text-[var(--primary)]">
                         <Sparkles className="size-5" aria-hidden="true" />
@@ -471,7 +471,7 @@ export function ClientShell() {
                   </div>
 
                   <div className="space-y-4">
-                    <div className="card-public rounded-[1.75rem] p-5 shadow-[var(--shadow-card)]">
+                    <div className="card-public rounded-[2rem] p-6 shadow-[var(--shadow-card)]">
                       <p className="m3-label text-[var(--primary)]">Sync history</p>
                       <p className="mt-2 text-[13px] leading-6 text-[var(--muted)]">
                         Historique des derniers stocks recus depuis Mikhmo AI vers le backend.
@@ -527,7 +527,7 @@ export function ClientShell() {
                 </div>
 
                 <div className="grid gap-8 sm:grid-cols-2">
-                  <div className="card-neutral rounded-[1.75rem] p-8 shadow-[var(--shadow-card)]">
+                  <div className="card-neutral rounded-[2rem] p-8 shadow-[var(--shadow-card)]">
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="text-lg font-bold">Support Center</h3>
@@ -557,7 +557,7 @@ export function ClientShell() {
                     </div>
                   </div>
 
-                  <div className="card-neutral rounded-[1.75rem] p-8 shadow-[var(--shadow-card)]">
+                  <div className="card-neutral rounded-[2rem] p-8 shadow-[var(--shadow-card)]">
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="text-lg font-bold">Recent Activity</h3>
@@ -567,7 +567,7 @@ export function ClientShell() {
                         <Sparkles className="size-5" aria-hidden="true" />
                       </button>
                     </div>
-                    <div className="mt-6 space-y-6">
+                    <div className="mt-6 space-y-8">
                       {recentActivity.map((item) => {
                         const Icon = item.icon;
                         return (

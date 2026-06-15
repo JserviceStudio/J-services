@@ -177,7 +177,7 @@ export function ResellerShell() {
             return (
               <>
                 <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-                  <div className="card-partner rounded-[1.75rem] p-6 shadow-[var(--shadow-card)]">
+                  <div className="card-partner rounded-[2rem] p-8 shadow-[var(--shadow-card)]">
                     <div className="flex items-center gap-2.5">
                       <span className="flex size-10 items-center justify-center rounded-[1rem] border border-[var(--line-strong)] bg-white/75 text-[var(--primary)]">
                         <CircleGauge className="size-5" aria-hidden="true" />
@@ -200,7 +200,7 @@ export function ResellerShell() {
                     </div>
                   </div>
 
-                  <div className="card-neutral rounded-[1.75rem] p-6 shadow-[var(--shadow-card)]">
+                  <div className="card-neutral rounded-[2rem] p-8 shadow-[var(--shadow-card)]">
                     <div className="flex items-center gap-2.5">
                       <span className="flex size-10 items-center justify-center rounded-[1rem] border border-[var(--line-strong)] bg-white/75 text-[var(--primary)]">
                         <Sparkles className="size-5" aria-hidden="true" />
@@ -383,7 +383,7 @@ export function ResellerShell() {
                     </p>
                   </div>
 
-                  <div className="card-public rounded-[1.75rem] p-5 shadow-[var(--shadow-card)]">
+                  <div className="card-public rounded-[2rem] p-6 shadow-[var(--shadow-card)]">
                     <div className="flex items-center gap-2.5">
                       <span className="flex size-10 items-center justify-center rounded-[1rem] border border-[var(--line-strong)] bg-white/75 text-[var(--primary)]">
                         <ReceiptText className="size-5" aria-hidden="true" />
